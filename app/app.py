@@ -1,31 +1,30 @@
 import asyncio
 import logging
+from functools import partial
+import signal
 from aiohttp import web
 
 from app import settings
-from aiokafka import AIOKafkaConsumer
 
 from app.api.v1.system.view import is_alive
 from app.api.v1.producer.view import send_to_kafka_topic
 from app.api.v1.consumer.view import start_consumer, stop_consumer
 
+logging.basicConfig(level=logging.INFO)
 
-async def stop_connection(app):
 
-    app.consumer.stop()
+def shutdown(app):
+
+    if hasattr(app, "consumer"):
+        app.consumer.stop()
+
+    for task in asyncio.Task.all_tasks():
+        task.cancel()
 
 
 async def init_app(loop):
 
     app = web.Application(loop=loop)
-
-    app.consumer = AIOKafkaConsumer(
-        settings.KAFKA_TOPIC,
-        loop=loop,
-        bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVER
-    )
-    await app.consumer.start()
-    logging.info(msg="Consumer started")
     app.add_routes(
         [
             web.get('/api/v1/system/is_alive', is_alive),
@@ -35,14 +34,16 @@ async def init_app(loop):
         ]
     )
 
-    app.on_shutdown.append(stop_connection(app))
-
-
     return app
 
 
 def start():
 
     loop = asyncio.get_event_loop()
+
     app = loop.run_until_complete(init_app(loop))
+    loop.add_signal_handler(signal.SIGHUP, partial(shutdown, app))
+    loop.add_signal_handler(signal.SIGTERM, partial(shutdown, app))
     web.run_app(app, port=8080, host="0.0.0.0")
+
+
