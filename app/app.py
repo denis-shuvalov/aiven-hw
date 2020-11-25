@@ -3,12 +3,14 @@ import logging
 from functools import partial
 import signal
 from aiohttp import web
-
+import asyncpg
+from aiokafka.helpers import create_ssl_context
 from app import settings
 
 from app.api.v1.system.view import is_alive
 from app.api.v1.producer.view import send_to_kafka_topic
 from app.api.v1.consumer.view import start_consumer, stop_consumer
+from app.api.v1.postgres.view import get_events_from_pg
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,9 +32,26 @@ async def init_app(loop):
             web.get('/api/v1/system/is_alive', is_alive),
             web.get('/api/v1/producer/send', send_to_kafka_topic),
             web.get('/api/v1/consumer/start', start_consumer),
-            web.get('/api/v1/consumer/stop', stop_consumer)
+            web.get('/api/v1/consumer/stop', stop_consumer),
+            web.get('/api/v1/postgres/events', get_events_from_pg)
         ]
     )
+
+    app.pool = await asyncpg.create_pool(
+        dsn=settings.POSTGRES_URL,
+        min_size=2,
+        max_size=20,
+        loop=loop
+    )
+
+    if settings.ENVIRONMENT == "aiven":
+        app.ssl_context = create_ssl_context(
+            cafile=settings.SSL_CAFILE_KAFKA,
+            certfile=settings.SSL_CERTFILE_KAFKA,
+            keyfile=settings.SSL_KEYFILE
+        )
+    else:
+        app.ssl_context = None
 
     return app
 

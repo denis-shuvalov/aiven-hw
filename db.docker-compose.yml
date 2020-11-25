@@ -31,6 +31,8 @@ services:
     image: postgres:latest
     ports:
       - '5432:5432'
+    networks:
+      - rmoff_kafka
     environment:
       POSTGRES_DB: event_storage
       POSTGRES_PASSWORD: qwerty

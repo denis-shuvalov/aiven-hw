@@ -19,7 +19,9 @@ async def start_consumer(request):
     request.app.consumer = AIOKafkaConsumer(
         settings.KAFKA_TOPIC,
         loop=loop,
-        bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVER
+        bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVER,
+        security_protocol="SSL" if settings.ENVIRONMENT == 'aiven' else "PLAINTEXT",
+        ssl_context=request.app.ssl_context
     )
 
     try:
