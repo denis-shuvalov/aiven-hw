@@ -4,4 +4,4 @@ RUN pip install -r /tmp/requirements.txt
 ADD . /aiven-hw
 WORKDIR /aiven-hw
 EXPOSE 8080
-CMD ["python","-u", "manage.py", "run"]
+CMD ["pytest", "tests/", "-s"]

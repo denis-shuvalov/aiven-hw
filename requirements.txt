@@ -3,3 +3,5 @@ aiohttp==3.7.3
 yoyo-migrations==7.2.1
 asyncpg==0.21.0
 psycopg2-binary==2.8.6
+pytest==6.1.2
+pytest-aiohttp==0.3.0

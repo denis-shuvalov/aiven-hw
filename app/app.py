@@ -12,16 +12,18 @@ from app.api.v1.producer.view import send_to_kafka_topic
 from app.api.v1.consumer.view import start_consumer, stop_consumer
 from app.api.v1.postgres.view import get_events_from_pg
 
+
 logging.basicConfig(level=logging.INFO)
 
 
 def shutdown(app):
 
-    if hasattr(app, "consumer"):
-        app.consumer.stop()
+    loop = asyncio.get_event_loop()
 
-    for task in asyncio.Task.all_tasks():
-        task.cancel()
+    loop.run_until_complete(app.pool.close())
+
+    if hasattr(app, "consumer"):
+        loop.run_until_complete(app.consumer.stop())
 
 
 async def init_app(loop):
