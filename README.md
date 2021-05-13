@@ -1,7 +1,5 @@
-# aiven-hw
-Test homework for Aiven. 
 The application is a web service with WEB API 
-for access to Kafka and PostgresSQL.
+for access to Kafka and PostgresSQL in the cloud platform of Aiven.
 
 The service based on AIOHTTP Python framework.
 
